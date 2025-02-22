@@ -1,0 +1,289 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "labelIds": "={{ $json[\"labelIds\"].indexOf(\"CATEGORY_PROMOTIONS\") === -1 }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        20,
+        220
+      ],
+      "id": "c3508556-f8ff-4c98-afa5-1ec10dc046cd",
+      "name": "Gmail",
+      "webhookId": "2b0278a1-6ba9-4f57-81f6-fef952867a96",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Oo7omLrNVSXG5jqK",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9d4a0b53-03f7-48d3-8dff-489b4f1592e8",
+              "name": "snippet",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            },
+            {
+              "id": "c70e550e-16a5-4122-835e-f7a1309be20a",
+              "name": "labels",
+              "value": "={{ $json.labels }}",
+              "type": "array"
+            },
+            {
+              "id": "b8cfed76-3d83-4f3e-9e5f-88e8c2ae2feb",
+              "name": "Subject",
+              "value": "={{ $json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "3eb997b5-c2fb-4fdf-b2c7-78eb7f82606c",
+              "name": "From",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "c35d03f9-f89c-49cf-888a-a715420b5458",
+              "name": "To",
+              "value": "={{ $json.To }}",
+              "type": "string"
+            },
+            {
+              "id": "f0539dc7-92ad-409f-8130-8f9f0f1e358e",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        340,
+        220
+      ],
+      "id": "3fc680b5-1ef7-4f8e-ac7e-b39d6807b53a",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "jsCode": " return items.map(item => {\n    function escapeSQL(value) {\n        if (typeof value !== \"string\") return value;\n        return value\n            .replace(/\\\\/g, \"\\\\\\\\\")   // Escape backslashes\n            .replace(/'/g, \"\\\\'\")     // Escape single quotes\n            .replace(/\"/g, '\\\\\"')     // Escape double quotes\n            .replace(/\\n/g, \"\\\\n\")    // Escape new lines\n            .replace(/\\r/g, \"\\\\r\")    // Escape carriage returns\n            .replace(/\\x00/g, \"\\\\0\")  // Escape NULL character\n            .replace(/\\x1a/g, \"\\\\Z\"); // Escape EOF character\n    }\n\n    return {\n        json: {\n            snippet: escapeSQL(item.json.snippet),\n            subject: escapeSQL(item.json.Subject),\n            sender_name: escapeSQL(item.json.From.match(/\"?(.*?)\"?\\s?</)?.[1] || \"Unknown Sender\"),\n            sender_email: escapeSQL(item.json.From.match(/<(.*?)>/)?.[1] || \"No Email\"),\n            recipient: escapeSQL(item.json.To),\n            labels: item.json.labels.map(label => escapeSQL(label.name)).join(\", \"),\n            id:item.json.id\n        }\n    };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        220
+      ],
+      "id": "921c363d-ee8a-4bb1-98bc-3abc4fdc9306",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "table": {
+          "__rl": true,
+          "value": "emails",
+          "mode": "list",
+          "cachedResultName": "emails"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        900,
+        220
+      ],
+      "id": "acd7a598-33f5-4347-b1be-18cf09c43be5",
+      "name": "MySQL1",
+      "credentials": {
+        "mySql": {
+          "id": "3LngYZ8Q1dHX2aoG",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_511095114269051587"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1820,
+        60
+      ],
+      "id": "8172d566-bd3b-4f70-8004-837b27a4146c",
+      "name": "Gmail1",
+      "webhookId": "4dfbad71-1da7-490e-9742-a59a03533a50",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Oo7omLrNVSXG5jqK",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM emails WHERE DATE(WrittenDateTime) = CURDATE();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1200,
+        220
+      ],
+      "id": "fe07108c-8c6e-4de9-afb4-ddcec70b413a",
+      "name": "MySQL",
+      "credentials": {
+        "mySql": {
+          "id": "3LngYZ8Q1dHX2aoG",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": "="
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1420,
+        220
+      ],
+      "id": "555dee2d-d314-4d8d-ace1-4d90359bbe66",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        360
+      ],
+      "id": "7f00917e-212a-4108-be06-d6477d42062a"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "MySQL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL1": {
+      "main": [
+        [
+          {
+            "node": "MySQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6b82858f-cada-4a27-b4be-89b0fdd67526",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "756cf644422a7fae78555382856811e5fbb19b4041db1b94eb20ce15ae7ca7d9"
+  },
+  "id": "agR9ZGuWSGiuvqex",
+  "tags": []
+}
